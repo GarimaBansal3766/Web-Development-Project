@@ -1,0 +1,92 @@
+﻿@{
+    Layout = "LoginLayout";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+@* <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> *@
+<script src="~/js/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+<script src="~/js/validation.js"></script>
+
+<script>
+    $(document).ready(function () 
+    {
+        $('#btnLogin').click(function () {
+            Login();
+        });
+
+        $('#signup').click(function  () {
+            window.location.href = "/Login/CreateAccount";
+        });
+
+        function Login() {
+        var username = $('#UserL').val().trim();
+        var password = $('#PasswordL').val().trim();
+
+        if (username === '' || password === '') {
+            alert('Enter login credentials');
+            return;
+        }
+
+        var Obj = {
+            Username: username,
+            Password: password
+        };
+
+            $.ajax({
+        url: "/Login/Login",
+        type: "POST",
+        data: Obj,
+        dataType: "json",
+        success: function (result) {
+            if (result.success && result.role === "User") {
+                alert("Login successful as User!");
+                window.location.href = "/User/Home";  // User page
+            }
+            else if (!result.success && result.role === "Admin") {
+                alert("Login successful as Admin!");
+                    window.location.href = "/Online/New_product";  // Admin page
+            }
+            else {
+                alert(result.message);
+            }
+        },
+        error: function () {
+            alert('Login Failed');
+        }
+    });
+
+    }
+
+});
+</script>
+
+<!-- Login Form -->
+<div class="row mt-5">
+    <div class="col-md-4"></div>
+
+    <div class="col-md-4">
+        <table class="table table-borderless">
+            <tr>
+                <th>Username</th>
+                <td><input id="UserL" class="form-control" placeholder="Enter Username" /></td>
+            </tr>
+            <tr>
+                <th>Password</th>
+                <td><input id="PasswordL" type="password" class="form-control" placeholder="Enter Password" /></td>
+            </tr>
+        </table>
+
+        <div class="text-center mb-3">
+            <button id="btnLogin" class="btn btn-primary">Login</button>
+        </div>
+
+        <div class="text-center">
+            <h5>New to Bansal Fashions?</h5>
+            <button id="signup" class="btn btn-outline-secondary">Create Your Bansal Fashions Account</button>
+        </div>
+    </div>
+
+    <div class="col-md-4"></div>
+</div>
