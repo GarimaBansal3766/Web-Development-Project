@@ -1,0 +1,55 @@
+﻿@{
+    Layout = "UserLayout";
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        var product = JSON.parse(localStorage.getItem("buyNowProduct"));
+        if (!product) {
+            $("#buyNowTableBody").html("<tr><td colspan='6' class='text-center text-danger'>⚠️ No product selected!</td></tr>");
+            return;
+        }
+
+        var row = `
+            <tr>
+                <td><img src="${product.Image}" style="width:60px;height:60px;object-fit:contain;" /></td>
+                <td>${product.Name}</td>
+                <td>${product.Sizes}</td>
+                <td>${product.Quantity}</td>
+                <td>₹${product.FinalPrice.toFixed(2)}</td>
+                <td class="itemTotal">₹${product.Total.toFixed(2)}</td>
+            </tr>
+        `;
+
+        $("#buyNowTableBody").append(row);
+        $("#grandTotal").text("₹" + product.Total.toFixed(2));
+
+           $("#placeOrderBtn").click(function () {
+        window.location.href = "/User/Order";
+    });
+  });
+</script>
+
+<div class="container mt-5">
+    <h2 class="mb-4">🛍 Buy Now Checkout</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Image</th>
+                <th>Product</th>
+                <th>Size</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody id="buyNowTableBody"></tbody>
+    </table>
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <h4>Grand Total: <span id="grandTotal">₹0</span></h4>
+        <button id="placeOrderBtn" class="btn btn-success">Place Order</button>
+    </div>
+</div>

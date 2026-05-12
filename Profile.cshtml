@@ -1,0 +1,191 @@
+﻿@{
+    Layout = "UserLayout";
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<div class="container mt-4">
+
+    <!-- 🔹 PROFILE CARD -->
+    <div class="card shadow mb-4 text-center">
+        <div class="card-body">
+            <img id="profileImage"
+                 class="rounded-circle border mb-3"
+                 style="width:140px;height:140px;object-fit:cover;" />
+
+            <h4 id="username" class="fw-bold"></h4>
+            <p id="phone"></p>
+            <p id="email" class="text-muted"></p>
+
+            <input type="file"
+                   id="profileFile"
+                   class="form-control w-50 mx-auto mb-2" />
+
+            <button class="btn btn-primary btn-sm" id="updateImageBtn">
+                Update Image
+            </button>
+        </div>
+    </div>
+
+    <!-- 🔹 MY ORDERS -->
+    <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+            My Orders
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-hover">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 🔹 ORDER DETAILS MODAL -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Order Details – <span id="modalOrderId"></span>
+                </h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Product ID</th>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderItemsBody"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+
+        // 🔹 Load profile & orders
+        $.get("/User/GetProfileData", function (res) {
+
+            if (res.redirect) {
+                window.location.href = res.redirect;
+                return;
+            }
+
+            $("#profileImage").attr("src", res.image);
+            $("#username").text(res.username);
+            $("#phone").text("📞 " + res.phone);
+            $("#email").text("📧 " + res.email);
+
+            if (res.orders.length === 0) {
+                $("#ordersBody").html(`
+                    <tr>
+                        <td colspan="4" class="text-center">No orders found</td>
+                    </tr>
+                `);
+            } else {
+                res.orders.forEach(o => {
+                    $("#ordersBody").append(`
+                        <tr>
+                            <td>
+                                <a href="javascript:void(0)"
+                                   class="fw-bold text-primary viewOrder"
+                                   data-id="${o.orderId}">
+                                    #${o.orderId}
+                                </a>
+                            </td>
+                            <td>${o.orderDate}</td>
+                            <td>₹${o.total}</td>
+                            <td>${o.status}</td>
+                        </tr>
+                    `);
+                });
+            }
+        });
+
+        // 🔹 Load order items
+        $(document).on("click", ".viewOrder", function () {
+
+            var orderId = $(this).data("id");
+            $("#modalOrderId").text("#" + orderId);
+            $("#orderItemsBody").html("");
+
+            $.get("/User/GetOrderItems",
+                { orderMasterId: orderId },
+                function (items) {
+
+                    if (items.length === 0) {
+                        $("#orderItemsBody").html(`
+                            <tr>
+                                <td colspan="5" class="text-center">No items</td>
+                            </tr>
+                        `);
+                    } else {
+                        items.forEach(i => {
+                            $("#orderItemsBody").append(`
+                                <tr>
+                                    <td>
+                                        <a href="/User/BuyProduct?productId=${i.productId}"
+                                           class="text-decoration-none text-primary fw-bold">
+                                            ${i.productId}
+                                        </a>
+                                    </td>
+                                    <td>${i.productName}</td>
+                                    <td>${i.quantity}</td>
+                                    <td>₹${i.price}</td>
+                                    <td>₹${i.total}</td>
+                                </tr>
+                            `);
+                        });
+                    }
+
+                    $("#orderDetailsModal").modal("show");
+                });
+        });
+
+        // 🔹 Update profile image
+        $("#updateImageBtn").click(function () {
+
+            var file = $("#profileFile")[0].files[0];
+            if (!file) {
+                alert("Please select an image");
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append("profileImage", file);
+
+            $.ajax({
+                url: "/User/UpdateProfileImage",
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function () {
+                    location.reload();
+                }
+            });
+        });
+
+    });
+</script>

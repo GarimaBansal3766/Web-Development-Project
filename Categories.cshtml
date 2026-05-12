@@ -1,0 +1,53 @@
+﻿@{
+    Layout = "UserLayout";
+}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+<script src="~/js/validation.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            url: "/User/ShowCategories",
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+                var cardContainer = $("#categoryCards");
+                cardContainer.empty(); // Clear previous cards
+
+                $.each(data, function (index, item) {
+                    var card = `
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 shadow category-card" data-category-id="${item.categoryId}" style="cursor:pointer;">
+                                <img src="${item.categoryimage}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="${item.categoryName}">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">${item.categoryName}</h5>
+                                    <p class="card-text"><strong>Category Active:</strong> ${item.isActive ? 'Yes' : 'No'}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                    cardContainer.append(card);
+                });
+            },
+            error: function () {
+                alert("Error loading categories.");
+            }
+        });
+
+        // Category card click handler
+        $(document).on("click", ".category-card", function () {
+            var categoryId = $(this).data("category-id");
+
+            // POST to backend and redirect
+            $.post("/User/SetCategory", { categoryId: categoryId }, function () {
+                window.location.href = "/User/Products";
+            });
+        });
+    });
+</script>
+
+<div class="container mt-4">
+    <div class="row" id="categoryCards"></div>
+</div>

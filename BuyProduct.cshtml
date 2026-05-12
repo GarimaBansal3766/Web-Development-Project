@@ -1,0 +1,224 @@
+﻿@{
+    Layout = "UserLayout";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+<script src="~/js/validation.js"></script>
+<link href="~/css/formatting.css" rel="stylesheet" />
+
+<script>
+    $(document).ready(function () {
+        var urlParams = new URLSearchParams(window.location.search);
+        var productId = urlParams.get('productId');
+        var quantity = 1;
+
+        if (productId) {
+            $.ajax({
+                url: '/User/GetProductDetails',
+                type: 'GET',
+                data: { productId: productId },
+                success: function (response) {
+                    if (response.success) {
+                        var product = response.data;
+
+                        // Set product details
+                        $('#productImage1').attr('src', product.productimage1);
+                        $('#productName').text(product.productName);
+                        $('#brandName').text(product.brandName); 
+                        $('#productDescription').text(product.productDescription);
+    if (product.productDiscount > 0) {
+        let discountedPrice = product.productPrice - (product.productPrice * product.productDiscount / 100);
+        $('#productPrice').html(
+            `<span style="text-decoration: line-through; color: gray;">₹${product.productPrice}</span>
+             <span style="color: green; font-weight: bold; margin-left: 8px;">₹${discountedPrice.toFixed(2)}</span>`
+        );
+    } else {
+        $('#productPrice').text("₹" + product.productPrice);
+    }
+                            $('#productDiscount').text(product.productDiscount);
+                        $('#categoryName').text(product.categoryName);
+
+                        $('.product-thumb[data-target="productimage2"]').attr('src', product.productimage2);
+                        $('.product-thumb[data-target="productimage3"]').attr('src', product.productimage3);
+
+                        // Thumbnail hover
+                        $('.product-thumb').on('mouseenter', function () {
+                            var targetKey = $(this).data('target');
+                            var newSrc = product[targetKey];
+                            $('#productImage1').attr('src', newSrc);
+                        });
+
+                        $('.product-thumb').on('mouseleave', function () {
+                            $('#productImage1').attr('src', product.productimage1);
+                        });
+
+                        // Quantity handlers
+                        function updateQuantityDisplay() {
+                            $('#quantityInput').val(quantity);
+                        }
+
+                        $('#incrementBtn').on('click', function () {
+                            quantity++;
+                            updateQuantityDisplay();
+                        });
+
+                        $('#decrementBtn').on('click', function () {
+                            if (quantity > 1) {
+                                quantity--;
+                                updateQuantityDisplay();
+                                enforceSizeLimit();
+                            }
+                        });
+
+                        // Size selection
+                        $('.size-btn').on('click', function () {
+                            $(this).toggleClass('active');
+
+                            var selected = $('.size-btn.active').map(function () {
+                                return $(this).data('size');
+                            }).get();
+
+                            if (selected.length > quantity) {
+                                $(this).removeClass('active');
+                                alert(`You can select up to ${quantity} size(s).`);
+                                return;
+                            }
+
+                            $('#selectedSizes').val(selected.join(','));
+                        });
+
+                        function enforceSizeLimit() {
+                            var activeButtons = $('.size-btn.active');
+                            if (activeButtons.length > quantity) {
+                                activeButtons.slice(quantity).removeClass('active');
+
+                                var trimmed = $('.size-btn.active').map(function () {
+                                    return $(this).data('size');
+                                }).get();
+
+                                $('#selectedSizes').val(trimmed.join(','));
+                            }
+                        }
+                      
+        $("#addToCartBtn").click(function () {
+
+        var size = $("#selectedSizes").val();
+
+        if (!size) {
+            alert("⚠️ Please select size");
+            return;
+        }
+
+        $.ajax({
+            url: "/User/AddToCart",
+            type: "POST",
+            data: {
+                productId: product.productId,
+                quantity: quantity,
+                size: size
+            },
+            success: function (res) {
+                if (res.redirect) {
+                    window.location.href = res.redirect;
+                    return;
+                }
+                alert("✅ Product added to cart");
+            }
+        });
+    });
+
+
+                             // ✅ Buy Now
+       // ✅ Buy Now
+    $('#buyNowBtn').on('click', function () {
+
+        var sizes = $('#selectedSizes').val();
+        if (!sizes || sizes.trim() === "") {
+            alert("⚠️ Please select size before buying!");
+            return;
+        }
+
+        $.ajax({
+            url: "/User/BuyNow",
+            type: "GET",
+            data: {
+                productId: product.productId
+            },
+            success: function () {
+                // 🚀 Go to Order page
+                window.location.href = "/User/Order";
+            },
+            error: function () {
+                alert("❌ Unable to process Buy Now");
+            }
+        });
+    });
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function () {
+                    alert('Error fetching product details.');
+                }
+            });
+        }
+    });
+</script>
+
+<div class="container mt-1">
+    <div class="row">
+        <div class="col-auto pe-1 d-flex flex-column align-items-center justify-content-start gap-2">
+            <img src="..." class="product-thumb" data-target="productimage2" />
+            <img src="..." class="product-thumb" data-target="productimage3" />
+        </div>
+
+        <div class="col-md-5">
+            <div class="border shadow-sm rounded">
+                <img id="productImage1" class="img-fluid w-100 border" style="max-height: 400px; object-fit: contain;" alt="Main Product Image" />
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="border p-4 bg-white shadow-sm rounded">
+                <h3 id="productName" class="mb-3 text-primary fw-bold"></h3>
+                <p class="mb-2"><strong>Brand:</strong> <span id="brandName" class="text-dark"></span></p>
+                <p class="mb-2"><strong>Description:</strong> <span id="productDescription" class="text-muted"></span></p>
+                <p class="mb-2"><strong>Price:</strong> ₹<span id="productPrice" class="text-success fw-semibold"></span></p>
+                <p class="mb-2"><strong>Discount:</strong> <span id="productDiscount" class="text-danger fw-semibold"></span>%</p>
+                <p class="mb-2"><strong>Category:</strong> <span id="categoryName" class="text-info fw-semibold"></span></p>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Quantity:</label>
+                    <div class="input-group" style="width: 120px;">
+                        <button class="btn btn-outline-secondary" type="button" id="decrementBtn">−</button>
+                        <input type="text" class="form-control text-center" id="quantityInput" value="1" readonly />
+                        <button class="btn btn-outline-secondary" type="button" id="incrementBtn">+</button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Select Size(s):</label>
+                    <div id="sizeOptions" class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-outline-primary size-btn" data-size="M">M</button>
+                        <button type="button" class="btn btn-outline-primary size-btn" data-size="L">L</button>
+                        <button type="button" class="btn btn-outline-primary size-btn" data-size="XL">XL</button>
+                        <button type="button" class="btn btn-outline-primary size-btn" data-size="XXL">XXL</button>
+                    </div>
+                    <input type="hidden" id="selectedSizes" name="selectedSizes" />
+                </div>
+                
+                <button id="addToCartBtn" class="btn btn-success mt-2">
+                    <i class="bi bi-cart-plus"></i> Add to Cart
+                </button>
+                <button id="buyNowBtn" class="btn btn-success mt-2">
+                    Buy Now
+                </button>
+
+
+            </div>
+        </div>
+    </div>
+</div>

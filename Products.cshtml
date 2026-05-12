@@ -1,0 +1,80 @@
+﻿@{
+    Layout = "UserLayout";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+<script src="~/js/validation.js"></script>
+
+<script>
+        $(document).on('click', '.product-card', function () {
+        var productId = $(this).data('id');
+        window.location.href = '/User/BuyProduct?productId=' + productId;
+    });
+
+    $(document).ready(function () {
+        var categoryId = $('#selectedCategoryId').val();
+
+        // Determine URL and parameters
+        var url = '/User/ShowProducts';
+        var data = {};
+
+        if (categoryId) {
+            data.categoryId = categoryId;
+        }
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            data: data,
+            success: function (products) {
+                let html = '';
+                       $.each(products, function (i, product) {
+        let priceHtml = '';
+        if (product.productDiscount > 0) {
+            let discountedPrice = product.productPrice - (product.productPrice * product.productDiscount / 100);
+            priceHtml = `
+                <p class="card-text">
+                    <strong>Price:</strong>
+                    <span style="text-decoration: line-through; color: gray; font-size:14px;">₹${product.productPrice}</span>
+                    <span style="color: green; font-weight: bold; font-size:18px; margin-left: 6px;">₹${discountedPrice.toFixed(2)}</span>
+                </p>
+                <p class="card-text text-success" style="font-size:16px;"><strong>Discount:</strong> ${product.productDiscount}%</p>
+            `;
+        } else {
+            priceHtml = `<p class="card-text"><strong>Price:</strong> ₹${product.productPrice}</p>`;
+        }
+
+        html += `
+        <div class="col-md-3 mb-4 mt-">
+            <div class="card h-100 shadow product-card" data-id="${product.productId}" style="cursor:pointer;">
+                <img src="${product.productimage1}"
+                     class="card-img-top"
+                     style="height: 200px; width: 100%; object-fit: contain;"
+                     alt="${product.productName}">
+                <div class="card-body">
+                    <h5 class="card-title">${product.productName}</h5>
+                    <p class="card-text"><strong>Brand:</strong> ${product.brandName}</p>
+                    ${priceHtml}
+                </div>
+            </div>
+        </div>`;
+    });
+
+
+                $('#productContainer').html(html);
+            },
+            error: function () {
+                alert('Error loading products.');
+            }
+        });
+    });
+</script>
+
+<input type="hidden" id="selectedCategoryId" value="@ViewBag.SelectedCategoryId" />
+
+<div class="row mt-4 ms-2" id="productContainer">
+    <!-- Products will appear here -->
+</div>

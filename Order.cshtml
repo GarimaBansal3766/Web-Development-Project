@@ -1,0 +1,134 @@
+﻿@{
+    Layout = "UserLayout";
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+            $("#btnPlaceOrder").click(function () {
+
+        var shippingAddress = $("#ShippingAddress").val();
+        var phoneNumber = $("#PhoneNumber").val();
+        var paymentMethod = $("#PaymentMethod").val();
+
+        if (!shippingAddress || !phoneNumber || !paymentMethod) {
+            alert("⚠️ Please fill all details");
+            return;
+        }
+
+        $.ajax({
+            url: "/User/ConfirmCartOrder",
+            type: "POST",
+            data: {
+                ShippingAddress: shippingAddress,
+                PhoneNumber: phoneNumber,
+                PaymentMethod: paymentMethod
+            },
+            success: function (res) {
+
+                if (res.redirect) {
+                    window.location.href = res.redirect;
+                    return;
+                }
+
+                if (res.success) {
+                    alert("✅ Order placed successfully!");
+                    window.location.href = "/User/Home";
+                } else {
+                    alert(res.message || "Order failed");
+                }
+            }
+        });
+    });
+        // 🔹 Load cart summary from DB
+    $.ajax({
+        url: "/User/GetOrderSummary",
+        type: "GET",
+        success: function (cart) {
+
+            if (cart.redirect) {
+                window.location.href = cart.redirect;
+                return;
+            }
+
+            let grandTotal = 0;
+
+            cart.forEach(function (item) {
+                grandTotal += item.totalAmount;
+
+                $("#orderSummaryBody").append(`
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>${item.quantity}</td>
+                        <td>₹${item.price}</td>
+                        <td>₹${item.totalAmount}</td>
+                    </tr>
+                `);
+            });
+
+            $("#grandTotal").text(grandTotal.toFixed(2));
+        }
+    });
+
+    });
+</script>
+
+
+<div class="container mt-5">
+    <h2 class="mb-4">🧾 Order Details</h2>
+
+    <!-- 🔹 PRODUCT SUMMARY TABLE -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>Product Summary</h5>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="orderSummaryBody"></tbody>
+            </table>
+
+            <h5 class="text-end">
+                Grand Total: ₹<span id="grandTotal">0</span>
+            </h5>
+        </div>
+    </div>
+
+    <!-- 🔹 SHIPPING & PAYMENT DETAILS -->
+    <div class="card">
+        <div class="card-body">
+            <h5>Shipping & Payment</h5>
+
+            <div class="mb-3">
+                <label>Shipping Address</label>
+                <textarea id="ShippingAddress" class="form-control"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label>Phone Number</label>
+                <input id="PhoneNumber" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label>Payment Method</label>
+                <select id="PaymentMethod" class="form-control">
+                    <option value="">-- Select --</option>
+                    <option value="COD">Cash on Delivery</option>
+                    <option value="UPI">UPI</option>
+                    <option value="Card">Debit / Credit Card</option>
+                </select>
+            </div>
+
+            <button id="btnPlaceOrder" class="btn btn-success w-100">
+                Place Order
+            </button>
+        </div>
+    </div>
+</div>
