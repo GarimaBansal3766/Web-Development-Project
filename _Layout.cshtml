@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Online_Shoppng</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Online_Shoppng.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <div class="bg-info w-100 py-3">
+            <div class="d-flex justify-content-center">
+                <img src="~/images/logo.png" class="img-fluid" style="max-height: 80px;" alt="Logo" />
+            </div>
+        </div>
+        <div class="row text-white" style="background-color: midnightblue;">
+            <ul class="nav justify-content-center py-2">
+                <li class="nav-item">
+                    <a class="nav-link text-white text-decoration-none" href="/Online/New_Product">Add New Product</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white text-decoration-none" href="/Login/Login">Log Out</a>
+                </li>
+            </ul>
+        </div>
+    </header>
+    <div class="container mt-4">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top text-muted py-4 bg-light">
+        <div class="container text-center">
+            &copy; 2025 - Bansal Fashions - All rights reserved
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
