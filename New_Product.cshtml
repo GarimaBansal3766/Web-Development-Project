@@ -1,0 +1,582 @@
+﻿     @model Online_Shoppng.Models.Entity.Category
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+<script src="~/js/validation.js"></script>
+    <script>
+        $(document).ready(function () {
+    let addCategoriesLoaded = false;
+    let updateCategoriesLoaded = false;
+                AllCategoriesList();
+            AllProductsList();
+            $('#btnaddcategory').click(function () {
+
+                AddCategory();
+            });
+
+            $('#btnaddproduct').click(function () {
+               AddProduct();
+            });
+                $('#Pcategory').on('click', function () {
+        if (!addCategoriesLoaded) 
+        {
+            loadCategories();
+            addCategoriesLoaded = true;
+        }
+    });
+
+    $('#Pcategoryu').on('click', function () {
+        if (!updateCategoriesLoaded) {
+            loadCategoriesu();
+            updateCategoriesLoaded = true;
+        }
+    });
+
+            $('#btnUp').click(function () {
+                UpdateCategory();
+            });
+             $('#pbtnUp').click(function () {
+                UpdateProduct();
+            });
+       
+        
+        });
+            $(document).on('click', '.edt-btn', function () {
+            var id = $(this).closest('tr').find('td:first').text();
+
+            $.ajax({
+                url: '/Online/SearchCategory/' + id,
+                type: 'GET',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (result) {
+                    $('#Cid').val(result.categoryId);
+                    $('#Cnameu').val(result.categoryName);
+                    $('input[name="IsActive"][value="' + result.isActive + '"]').prop('checked', true);
+                    $('#CategoryModalU').modal('show');
+                },
+                error: function () {
+                    alert('Error loading category data.');
+                }
+            });
+        });
+        $(document).on('click', '.delete-btn', function () {
+            var categoryId = $(this).data('categoryid');
+
+            $.ajax({
+                url: '/Online/DeleteCategory/' + categoryId,
+                type: 'GET',
+                success: function (result) {
+                    if (result.success)
+                    {
+                        $('#row_' + categoryId).remove(); 
+                        alert('Category Deleted.');
+                        AllCategoriesList();
+                    
+                    }
+                    else
+                    {
+                        alert('Delete failed.');
+                    }
+                },
+                error: function () {
+                    alert('Error during deletion.');
+                }
+            });
+
+        });
+
+            function AddCategory() {
+               
+                var formData = new FormData();
+                formData.append("categoryName", $('#Cname').val());
+                formData.append("isActive", $('input[name="IsActive"]:checked').val());
+                formData.append("categoryImage", $('#Cimage')[0].files[0]);
+
+                $.ajax({
+                    url: "/Online/AddCategory",
+                    type: "POST",
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function () 
+                    {
+                        alert('Category added successfully!');
+                        $('#CategoryModal').modal('hide');
+                        //categoriesLoaded = false;
+                        AllCategoriesList();
+                    
+                    },
+                    error: function () {
+                        alert('Error adding Category.');
+                    }
+                });
+            }
+
+           
+            function loadCategories() {
+                $.ajax({
+                    url: '/Online/GetAllCategories',
+                    type: 'GET',
+                    success: function (data) {
+                        let dropdown = $('#Pcategory');
+                        dropdown.empty();
+                        dropdown.append('<option value="">-- Select Category --</option>');
+                        $.each(data, function (i, category) {
+                            dropdown.append(`<option value="${category.categoryId}">${category.categoryName}</option>`);
+                        });
+                    },
+                    error: function () {
+                        alert('Error loading categories');
+                    }
+                });
+            }
+            function loadCategoriesu() {
+                $.ajax({
+                    url: '/Online/GetAllCategories',
+                    type: 'GET',
+                    success: function (data) {
+                        let dropdown = $('#Pcategoryu');
+                        dropdown.empty();
+                        dropdown.append('<option value="">-- Select Category --</option>');
+                        $.each(data, function (i, category) {
+                            dropdown.append(`<option value="${category.categoryId}">${category.categoryName}</option>`);
+                        });
+                    },
+                    error: function () {
+                        alert('Error loading categories');
+                    }
+                });
+            }
+
+            function AllCategoriesList() {
+                $.ajax({
+                    url: "/Online/GetAllCategories",
+                    type: "GET",
+                    contentType: "application/json;charset=utf-8",
+                    dataType: "json",
+                    success: function (result) {
+
+                        console.log(result);
+                    
+                        var html = '';
+                        $.each(result, function (i, obj) 
+                        {
+                                html += '<tr id="row_' + obj.categoryId + '">';
+                                html += '<td>' + obj.categoryId + '</td>';
+                            html += '<td>' + obj.categoryName + '</td>'; 
+                            html += '<td><img src=' + obj.categoryimage + ' width=50/></td>';
+                            html += '<td>' + (obj.isActive ? 'Active' : 'Inactive') + '</td>';
+                            html += '<td><button class="delete-btn" data-categoryId="' + obj.categoryId + '">Delete</button></td>';
+                            html += '<td><button type="button" class="edt-btn" data-categoryId="' + obj.categoryId + '">Update</button></td>';
+                            html += '</tr>';
+                        });
+                        $('.tblcat').empty().append(html);
+                        },
+                    error: function () {
+                        alert('Error loading data.');
+                    }
+                });
+            }
+
+             function UpdateCategory() {
+            var formData = new FormData();
+
+            formData.append("CategoryId", $('#Cid').val());
+            formData.append("CategoryName", $('#Cnameu').val());
+            formData.append("IsActive", $('input[name="IsActive"]:checked').val());
+
+            if ($('#Cimageu')[0].files.length > 0) {
+                formData.append("categoryImage", $('#Cimageu')[0].files[0]);
+            }
+
+            $.ajax({
+                url: "/Online/UpdateCategory",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (result) {
+                    if (result.success) {
+                        alert('Category updated successfully!');
+                        AllCategoriesList();
+                        $('#CategoryModalU').modal('hide');
+                    } else {
+                        alert('Update failed.');
+                    }
+                },
+                error: function () {
+                    alert('Error updating Category.');
+                }
+            });
+        }
+      
+             function AddProduct() {
+                 
+                var formData = new FormData();
+                formData.append("productName", $('#Pname').val());
+                formData.append("productPrice", $('#Pprice').val());
+                formData.append("productDescription", $('#Pdescription').val());
+                formData.append("productDiscount", $('#Pdiscount').val());
+                formData.append("brandName", $('#Pbrand').val());
+                formData.append("categoryId", $('#Pcategory').val());
+
+                formData.append("productImage1", $('#Pimage1')[0].files[0]);
+                formData.append("productImage2", $('#Pimage2')[0].files[0]);
+                formData.append("productImage3", $('#Pimage3')[0].files[0]);
+
+                $.ajax({
+                    url: "/Online/AddProduct",
+                    type: "POST",
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function ()
+                    {
+                        alert('Product added successfully');
+                        $('#ProductModal').modal('hide');
+                        //categoriesLoaded = false;
+                        AllProductsList();
+                    
+
+                    },
+                    error: function () {
+                        alert('Error adding Product.');
+                    }
+                });
+            }
+
+
+            function AllProductsList() {
+            $.ajax({
+                url: "/Online/GetProducts",
+                type: "GET",
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function (result) {
+                    var html = '';
+                    $.each(result, function (i, obj) {
+                        html += '<tr id="row_' + obj.productId + '">';
+                        html += '<td>' + obj.productId + '</td>';
+                        html += '<td>' + obj.productName + '</td>';
+                        html += '<td>' + obj.categoryId + '</td>';
+                        html += '<td>' + obj.productPrice + '</td>';
+                        html += '<td>' + obj.productDescription + '</td>';
+                        html += '<td>' + obj.productDiscount + '</td>';
+                        html += '<td>' + obj.brandName + '</td>';
+                        html += '<td><img src="' + obj.productimage1 + '" width="50"/></td>';
+                        html += '<td><img src="' + obj.productimage2 + '" width="50"/></td>';
+                        html += '<td><img src="' + obj.productimage3 + '" width="50"/></td>';
+                        html += '<td><button type="button" class="pdelete-btn" data-productid="' + obj.productId + '">Delete</button></td>';
+                        html += '<td><button type="button" class="pedt-btn" data-productId="' + obj.productId + '">Update</button></td>';
+                        html += '</tr>';
+                    });
+                    $('.tblpro').empty().append(html);
+                },
+                error: function () {
+                    alert('Error loading data.');
+                }
+            });
+        }
+        $(document).on('click', '.pdelete-btn', function () {
+            var productId = $(this).data('productid');
+
+            $.ajax({
+                url: '/Online/DeleteProduct/' + productId,
+                type: 'GET',
+                success: function (result) {
+                    if (result.success)
+                    {
+                        $('#row_' + productId).remove();
+                        alert('Product Deleted.');
+                        AllProductsList();
+
+                    }
+                    else
+                    {
+                        alert('Delete failed.');
+                    }
+                },
+                error: function () {
+                    alert('Error during deletion.');
+                }
+            });
+
+        });
+                     $(document).on('click', '.pedt-btn', function () {
+        var Proid = $(this).closest('tr').find('td:first').text();
+
+        $.ajax({
+            url: '/Online/SearchProduct/' + Proid,
+            type: 'GET',
+            contentType: 'application/json; charset=utf-8',
+            dataType: 'json',
+            success: function (result) {
+                // Store the product info temporarily
+                const productData = result;
+
+                // First load categories into the dropdown
+                $.ajax({
+                    url: '/Online/GetAllCategories',
+                    type: 'GET',
+                    success: function (data) {
+                        let dropdown = $('#Pcategoryu');
+                        dropdown.empty();
+                        dropdown.append('<option value="">-- Select Category --</option>');
+                        $.each(data, function (i, category) {
+                            dropdown.append(`<option value="${category.categoryId}">${category.categoryName}</option>`);
+                        });
+
+                        // Now set all product fields
+                        $('#Pidu').val(productData.productId);
+                        $('#Pnameu').val(productData.productName);
+                        $('#Pcategoryu').val(productData.categoryId); // now this will work
+                        $('#Ppriceu').val(productData.productPrice);
+                        $('#Pdescriptionu').val(productData.productDescription);
+                        $('#Pdiscountu').val(productData.productDiscount);
+                        $('#Pbrandu').val(productData.brandName);
+
+                        $('#ProductModalU').modal('show');
+                    },
+                    error: function () {
+                        alert('Error loading categories');
+                    }
+                });
+            },
+            error: function () {
+                alert('Error loading product data.');
+            }
+        });
+    });
+
+         function UpdateProduct() {
+        
+
+            var formData = new FormData();
+            formData.append("productId", $('#Pidu').val());
+                 formData.append("productName", $('#Pnameu').val());
+                formData.append("categoryId", $('#Pcategoryu').val());
+                formData.append("productPrice", $('#Ppriceu').val());
+                formData.append("productDescription", $('#Pdescriptionu').val());
+                formData.append("productDiscount", $('#Pdiscountu').val());
+                formData.append("brandName", $('#Pbrandu').val());
+
+            if ($('#Pimage1u')[0].files.length > 0) {
+                formData.append("productimage1", $('#Pimage1u')[0].files[0]);
+            }
+            if ($('#Pimage2u')[0].files.length > 0) {
+                formData.append("productimage2", $('#Pimage2u')[0].files[0]);
+            }if ($('#Pimage3u')[0].files.length > 0) {
+                formData.append("productimage3", $('#Pimage3u')[0].files[0]);
+            }
+
+            $.ajax({
+                url: "/Online/UpdateProduct",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (result) {
+                    if (result.success) {
+                        alert('Product updated successfully!');
+                        AllProductsList();
+                        $('#ProductModalU').modal('hide');
+                    } else {
+                        alert('Update failed.');
+                    }
+                },
+                error: function () {
+                    alert('Error updating Product.');
+                }
+            });
+        }
+
+    </script>
+
+    <div style="background-color: paleturquoise; width: 100%; margin: 0; padding: 0;">
+
+
+
+
+    <div class="row">
+            <div class="row">
+                <div class="col-md-6 d-flex flex-column align-items-center">
+                    <!-- Category Button & Modal -->
+
+                    <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal" data-bs-target="#CategoryModal">
+                        Add Category
+                    </button>
+
+                    <div class="modal fade" id="CategoryModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Add Product Category</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <table class="table">
+                                        <tr>
+                                            <th>Category Name</th>
+                                            <td><input type="text" id="Cname" class="form-control" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Category Image</th>
+                                            <td><input type="file" id="Cimage" class="form-control" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Status</th>
+                                            <td>
+                                                <input type="radio" name="IsActive" value="true" class="form-check-input" checked /> Active
+                                                <input type="radio" name="IsActive" value="false" class="form-check-input" /> Inactive
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button class="btn btn-primary" id="btnaddcategory">Add Category</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" id="CategoryModalU" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Update Product Category</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <input type="hidden" id="Cid" />
+                                    <table class="table">
+
+                                        <tr>
+                                            <th>Category Name</th>
+                                            <td><input type="text" id="Cnameu" class="form-control" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Category Image</th>
+                                            <td><input type="file" id="Cimageu" class="form-control" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Status</th>
+                                            <td>
+                                                <input type="radio" name="IsActive" value="true" class="form-check-input" checked /> Active
+                                                <input type="radio" name="IsActive" value="false" class="form-check-input" /> Inactive
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button class="btn btn-primary" id="btnUp">Update Category</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <div class="col-md-6 d-flex flex-column align-items-center ">
+                <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal" data-bs-target="#ProductModal">
+                    Add Product
+                </button>
+
+                <div class="modal fade" id="ProductModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Add Product</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <table class="table">
+                                    <tr><th>Name</th><td><input id="Pname" class="form-control" /></td></tr>
+                                    <tr><th>Category </th><td><select id="Pcategory" class="form-control"></select></td></tr>
+                                    <tr><th>Price</th><td><input type="number" id="Pprice" class="form-control" /></td></tr>
+                                    <tr><th>Description</th><td><input id="Pdescription" class="form-control" /></td></tr>
+                                    <tr><th>Discount</th><td><input type="number" id="Pdiscount" class="form-control" /></td></tr>
+                                    <tr><th>Brand</th><td><input id="Pbrand" class="form-control" /></td></tr>
+                                    <tr><th>Image 1</th><td><input type="file" id="Pimage1" class="form-control" /></td></tr>
+                                    <tr><th>Image 2</th><td><input type="file" id="Pimage2" class="form-control" /></td></tr>
+                                    <tr><th>Image 3</th><td><input type="file" id="Pimage3" class="form-control" /></td></tr>
+                                </table>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button class="btn btn-primary" id="btnaddproduct">Add Product</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    <div class="modal fade" id="ProductModalU" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Add Product</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <input type="hidden" id="Pidu" />
+
+                                    <table class="table">
+                                        <tr><th>Name</th><td><input id="Pnameu" class="form-control" /></td></tr>
+                                        <tr><th>Category </th><td><select id="Pcategoryu" class="form-control"></select></td></tr>
+                                        <tr><th>Price</th><td><input type="number" id="Ppriceu" class="form-control" /></td></tr>
+                                        <tr><th>Description</th><td><input id="Pdescriptionu" class="form-control" /></td></tr>
+                                        <tr><th>Discount</th><td><input type="number" id="Pdiscountu" class="form-control" /></td></tr>
+                                        <tr><th>Brand</th><td><input id="Pbrandu" class="form-control" /></td></tr>
+                                        <tr><th>Image 1</th><td><input type="file" id="Pimage1u" class="form-control" /></td></tr>
+                                        <tr><th>Image 2</th><td><input type="file" id="Pimage2u" class="form-control" /></td></tr>
+                                        <tr><th>Image 3</th><td><input type="file" id="Pimage3u" class="form-control" /></td></tr>
+                                    </table>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button class="btn btn-primary" id="pbtnUp">Update Product</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            </div>
+            <div class="col-md-6" > 
+            <table class="table table-bordered table-striped" id="CategoryTable">
+                <thead>
+                    <tr>
+                        <th>Category Id</th>
+                        <th>Name</th>
+                        <th>Image</th>
+                        <th>Status</th>
+                        <th>Delete</th>
+                        <th>Edit</th>
+                    </tr>
+                </thead>
+                <tbody class="tblcat"></tbody>
+            </table>
+        </div>
+            <div class="col-md-6">
+                <table class="table table-bordered table-striped" id="ProductTable">
+                    <thead>
+                        <tr>
+                            <th>Product ID </th>
+                            <th>Product Name</th>
+                            <th>Product Category ID</th>
+                            <th>Product Price</th>
+                            <th>Product Description</th>
+                            <th>Product Discount</th>
+                            <th>Product Brand</th>
+                            <th>Image 1</th>
+                            <th>Image 2</th>
+                            <th>Image 3</th>
+                            <th>Delete</th>
+                            <th>Edit</th>
+                        </tr>
+                    </thead>
+                    <tbody class="tblpro"></tbody>
+                </table>
+            </div>
+         </div>
+    </div>
